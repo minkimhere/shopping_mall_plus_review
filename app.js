@@ -57,8 +57,14 @@ router.post("/auth", async (req, res) => {
 });
 
 router.get("/users/me", authMiddleware, async (req, res) => {
-  console.log(res.locals);
-  res.status(400).json({});
+  const { user } = res.locals;
+
+  res.json({
+    user: {
+      email: user.email,
+      nickname: user.nickname,
+    },
+  });
 });
 
 app.use(express.urlencoded({ extended: false }));
