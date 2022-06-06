@@ -21,7 +21,7 @@ const connect = () => {
 connect();
 
 const postUserSchema = Joi.object({
-  username: Joi.string().required(),
+  nickname: Joi.string().required(),
   email: Joi.string().email().required(),
   password: Joi.string().required(),
   confirmPassword: Joi.string().required(),
@@ -57,20 +57,31 @@ router.post("/users", async (req, res) => {
   }
 });
 
+const postAuthSchema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().required(),
+});
+
 router.post("/auth", async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = await postAuthSchema.validateAsync(req.body);
 
-  const user = await User.findOne({ email, password }).exec();
+    const user = await User.findOne({ email, password }).exec();
 
-  if (!user) {
-    return res // 401 :인증실패
-      .status(401)
-      .json({ errorMessage: "이메일 또는 패스워드가 잘못 입력하셨습니다." });
+    if (!user) {
+      return res // 401 :인증실패
+        .status(401)
+        .json({ errorMessage: "이메일 또는 패스워드가 잘못 입력하셨습니다." });
+    }
+
+    const token = jwt.sign({ userId: user.userId }, "test-secret-key");
+
+    res.json({ token });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ errorMessage: "요청한 데이터 형식이 올바르지 않습니다." });
   }
-
-  const token = jwt.sign({ userId: user.userId }, "test-secret-key");
-
-  res.json({ token });
 });
 
 router.get("/users/me", authMiddleware, async (req, res) => {
