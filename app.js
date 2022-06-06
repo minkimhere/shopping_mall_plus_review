@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const User = require("./models/user");
+const authMiddleware = require("./middlewares/auth-middleware");
 
 const app = express();
 const router = express.Router();
@@ -45,7 +46,7 @@ router.post("/auth", async (req, res) => {
   const user = await User.findOne({ email, password }).exec();
 
   if (!user) {
-    return res
+    return res // 401 :인증실패
       .status(401)
       .json({ errorMessage: "이메일 또는 패스워드가 잘못 입력하셨습니다." });
   }
@@ -53,6 +54,11 @@ router.post("/auth", async (req, res) => {
   const token = jwt.sign({ userId: user.userId }, "test-secret-key");
 
   res.json({ token });
+});
+
+router.get("/users/me", authMiddleware, async (req, res) => {
+  console.log(res.locals);
+  res.status(400).json({});
 });
 
 app.use(express.urlencoded({ extended: false }));
