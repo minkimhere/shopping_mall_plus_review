@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
+const Joi = require("joi");
 const User = require("./models/user");
 const authMiddleware = require("./middlewares/auth-middleware");
 
@@ -17,8 +18,16 @@ const connect = () => {
 
 connect();
 
+const schema = Joi.object({
+  username: Joi.string().required(),
+  email: Joi.string().email().required(),
+  password: Joi.string().required(),
+  confirmPassword: Joi.string().required(),
+});
+
 router.post("/users", async (req, res) => {
-  const { nickname, email, password, confirmPassword } = req.body;
+  const { email, nickname, password, confirmPassword } =
+    await schema.validateAsync(req.body);
 
   if (password !== confirmPassword) {
     return res.status(400).json({
